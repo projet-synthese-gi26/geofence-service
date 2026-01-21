@@ -1,0 +1,79 @@
+# docker-compose.prod.yml
+
+services:
+  postgres:
+    image: postgis/postgis:15-3.4
+    container_name: geofence-postgres-prod
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./backups:/backups
+    networks:
+      - geofence-network
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: geofence-api-prod
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_ENCRYPTION_KEY: ${JWT_ENCRYPTION_KEY}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      FRONTEND_URL: ${FRONTEND_URL}
+      UPLOAD_DIR: /app/uploads
+      SERVER_PORT: 8081
+      SPRING_PROFILES_ACTIVE: prod
+      JAVA_OPTS: "-Xms1g -Xmx2g -XX:+UseG1GC"
+    ports:
+      - "8081:8081"
+    volumes:
+      - uploads_prod_data:/app/uploads
+      - ./logs:/app/logs
+    networks:
+      - geofence-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: always
+
+  # Reverse proxy Nginx (optionnel)
+  nginx:
+    image: nginx:alpine
+    container_name: geofence-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    networks:
+      - geofence-network
+    depends_on:
+      - api
+    restart: always
+    profiles:
+      - nginx
+
+volumes:
+  postgres_prod_data:
+  uploads_prod_data:
+
+networks:
+  geofence-network:
+    driver: bridge

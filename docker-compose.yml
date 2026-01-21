@@ -1,0 +1,92 @@
+# docker-compose.yml
+
+services:
+  # Base de données PostgreSQL + PostGIS
+  postgres:
+    image: postgis/postgis:15-3.4
+    container_name: geofence-postgres
+    environment:
+      POSTGRES_DB: geofence_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
+    networks:
+      - geofence-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d geofence_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Application Spring Boot
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: geofence-api
+    environment:
+      # Base de données
+      DB_URL: jdbc:postgresql://postgres:5432/geofence_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres123
+
+      # JWT
+      JWT_ENCRYPTION_KEY: ${JWT_ENCRYPTION_KEY:-608f36e92dc66d97d5933f0e6371893cb4fc05b3aa8f8de64014732472303a7c}
+
+      # Application
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      UPLOAD_DIR: /app/uploads
+      SERVER_PORT: 8081
+
+      # Spring profiles
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8081:8081"
+    volumes:
+      - uploads_data:/app/uploads
+    networks:
+      - geofence-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Interface d'administration PostgreSQL (optionnel)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: geofence-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@geofence.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    networks:
+      - geofence-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+    driver: local
+  uploads_data:
+    driver: local
+
+networks:
+  geofence-network:
+    driver: bridge
