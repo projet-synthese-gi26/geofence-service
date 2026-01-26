@@ -58,6 +58,10 @@ public class ConfigurationSecurityApplication {
                         .pathMatchers(HttpMethod.GET, "/").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api").permitAll()
 
+                        // actuator
+                        .pathMatchers(HttpMethod.GET, "/api/actuator/**").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/actuator/**").permitAll()
+
                         // Invite links
                         .pathMatchers(HttpMethod.GET, "/api/geofence/invite/*").permitAll()
 
