@@ -1,0 +1,11 @@
+{
+  "name": "Segment A",
+  "description": "Branche principale",
+  "pathLine": { "coordinates": [[3.861,11.511],[3.862,11.512],[3.863,11.513]] },
+  "segmentOrder": 1,
+  "segmentType": "MAIN",
+  "priority": 5,
+  "speedLimit": 60.0,
+  "estimatedTime": 600,
+  "isActive": true
+}

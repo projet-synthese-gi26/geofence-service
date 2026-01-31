@@ -1,0 +1,26 @@
+{
+  "type": "polygon",
+  "title": "Zone Entrepôt",
+  "description": "Aire de stockage — accès restreint",
+  "polygon": {
+    "coordinates": [
+      [
+        [3.8660, 11.5160],
+        [3.8670, 11.5160],
+        [3.8670, 11.5170],
+        [3.8660, 11.5170],
+        [3.8660, 11.5160]
+      ]
+    ]
+  },
+
+  "isTemporalEnabled": false,
+  "startTime": null,
+  "endTime": null,
+  "activeDays": null,
+
+  "isConditionalEnabled": true,
+  "maxSpeed": 20.0,
+  "maxDwellTime": 7200,
+  "minDwellTime": 30
+}

@@ -1,0 +1,10 @@
+{
+  "brand": "Toyota",
+  "model": "Hilux 2020",
+  "licensePlate": "AB-123-CD",
+  "description": "Véhicule de livraison — zone nord",
+  "geofenceZoneIds": [
+    "123e4567-e89b-12d3-a456-426614174000",
+    "456e7890-e89b-12d3-a456-426614174001"
+  ]
+}

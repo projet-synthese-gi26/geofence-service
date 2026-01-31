@@ -164,7 +164,7 @@ public class GeofenceServiceImpl implements GeofenceService {
         }
         if (geofenceZoneDTORequest.activeDays() != null) {
             polygonGeofenceZone.setActiveDays(java.util.Arrays.stream(geofenceZoneDTORequest.activeDays())
-                .map(day -> java.time.DayOfWeek.valueOf(day))
+                .map(day -> ink.yowyob.geofence.util.DayOfWeekParser.parseToJavaDayOfWeek(day))
                 .collect(java.util.stream.Collectors.toSet()));
         }
         polygonGeofenceZone.setIsConditionalEnabled(geofenceZoneDTORequest.isConditionalEnabled());
@@ -220,7 +220,7 @@ public class GeofenceServiceImpl implements GeofenceService {
         }
         if (geofenceZoneDTORequest.activeDays() != null) {
             polygonGeofenceZone.setActiveDays(java.util.Arrays.stream(geofenceZoneDTORequest.activeDays())
-                .map(day -> java.time.DayOfWeek.valueOf(day))
+                .map(day -> ink.yowyob.geofence.util.DayOfWeekParser.parseToJavaDayOfWeek(day))
                 .collect(java.util.stream.Collectors.toSet()));
         }
         if (geofenceZoneDTORequest.isConditionalEnabled() != null) {
@@ -284,7 +284,7 @@ public class GeofenceServiceImpl implements GeofenceService {
         }
         if (geofenceZoneDTORequest.activeDays() != null) {
             circleGeofenceZone.setActiveDays(java.util.Arrays.stream(geofenceZoneDTORequest.activeDays())
-                .map(day -> java.time.DayOfWeek.valueOf(day))
+                .map(day -> ink.yowyob.geofence.util.DayOfWeekParser.parseToJavaDayOfWeek(day))
                 .collect(java.util.stream.Collectors.toSet()));
         }
         circleGeofenceZone.setIsConditionalEnabled(geofenceZoneDTORequest.isConditionalEnabled());
@@ -344,7 +344,7 @@ public class GeofenceServiceImpl implements GeofenceService {
         }
         if (geofenceZoneDTORequest.activeDays() != null) {
             circleGeofenceZone.setActiveDays(java.util.Arrays.stream(geofenceZoneDTORequest.activeDays())
-                .map(day -> java.time.DayOfWeek.valueOf(day))
+                .map(day -> ink.yowyob.geofence.util.DayOfWeekParser.parseToJavaDayOfWeek(day))
                 .collect(java.util.stream.Collectors.toSet()));
         }
         if (geofenceZoneDTORequest.isConditionalEnabled() != null) {

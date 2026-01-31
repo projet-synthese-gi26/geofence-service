@@ -1,0 +1,7 @@
+{
+  "geofenceId": "123e4567-e89b-12d3-a456-426614174000",
+  "geofenceType": "c",
+  "expiresAt": "2025-12-31T23:59:59",
+  "canEdit": true,
+  "maxUses": 5
+}

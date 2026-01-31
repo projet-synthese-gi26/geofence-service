@@ -1,0 +1,32 @@
+{
+  "name": "Trajet Centre -> Entrepôt",
+  "description": "Itinéraire standard pour livraisons matinales",
+  "startPoint": { "coordinates": [3.8600, 11.5100] },
+  "startAddress": "Centre-ville, 1 Rue Principale",
+  "endPoint": { "coordinates": [3.8700, 11.5200] },
+  "endAddress": "Entrepôt Sud",
+  "estimatedDistance": 12000.0,
+  "estimatedDuration": 1800,
+  "deviationTolerance": 250.0,
+
+  "isTemporalEnabled": true,
+  "startTime": "06:00",
+  "endTime": "10:00",
+  "activeDays": ["MON","TUE","WED","THU","FRI"],
+
+  "authorizedSegments": [
+    {
+      "name": "Segment A",
+      "description": "Route via pont",
+      "pathLine": { "coordinates": [[3.861,11.511],[3.862,11.512],[3.863,11.513]] },
+      "segmentOrder": 1,
+      "segmentType": "MAIN",
+      "priority": 10,
+      "speedLimit": 50.0,
+      "estimatedTime": 600,
+      "isActive": true
+    }
+  ],
+
+  "isActive": true
+}

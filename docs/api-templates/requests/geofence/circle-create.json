@@ -1,0 +1,17 @@
+{
+  "type": "circle",
+  "title": "Zone Bureau",
+  "description": "Périmètre autorisé autour du bureau",
+  "center": { "coordinates": [3.8667, 11.5167] },
+  "radius": 500.0,
+
+  "isTemporalEnabled": true,
+  "startTime": "08:00",
+  "endTime": "18:00",
+  "activeDays": ["MON","TUE","WED","THU","FRI"],
+
+  "isConditionalEnabled": true,
+  "maxSpeed": 80.0,
+  "maxDwellTime": 3600,
+  "minDwellTime": 60
+}

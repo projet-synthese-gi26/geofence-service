@@ -68,7 +68,7 @@ public class RouteServiceImpl implements RouteService {
             }
             if (routeRequest.activeDays() != null) {
                 Set<ink.yowyob.geofence.Enum.DayOfWeek> activeDays = java.util.Arrays.stream(routeRequest.activeDays())
-                    .map(day -> ink.yowyob.geofence.Enum.DayOfWeek.valueOf(day))
+                    .map(day -> ink.yowyob.geofence.Enum.DayOfWeek.parse(day))
                     .collect(Collectors.toSet());
                 route.setActiveDays(activeDays);
             }
@@ -167,7 +167,7 @@ public class RouteServiceImpl implements RouteService {
             }
             if (routeRequest.activeDays() != null) {
                 Set<ink.yowyob.geofence.Enum.DayOfWeek> activeDays = java.util.Arrays.stream(routeRequest.activeDays())
-                    .map(day -> ink.yowyob.geofence.Enum.DayOfWeek.valueOf(day))
+                    .map(day -> ink.yowyob.geofence.Enum.DayOfWeek.parse(day))
                     .collect(Collectors.toSet());
                 route.setActiveDays(activeDays);
             }

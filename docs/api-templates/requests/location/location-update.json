@@ -1,0 +1,9 @@
+{
+  "latitude": 11.5167,
+  "longitude": 3.8667,
+  "speed": 45.5,
+  "heading": 120.0,
+  "altitude": 350.0,
+  "accuracy": 5.0,
+  "source": "gps-tracker-01"
+}

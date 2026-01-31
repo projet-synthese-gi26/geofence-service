@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -45,7 +46,8 @@ public class Alert {
     @Column(name = "is_read", nullable = false, columnDefinition = "boolean default false")
     private Boolean isRead = false; // Statut de lecture de l'alerte
     
-    @Column(name = "severity", columnDefinition = "varchar(20) default 'INFO'")
+    @Column(name = "severity", length = 20, nullable = false)
+    @ColumnDefault("'INFO'")
     private String severity = "INFO"; // CRITICAL, WARNING, INFO
     
     @Column(name = "additional_data", columnDefinition = "TEXT")
