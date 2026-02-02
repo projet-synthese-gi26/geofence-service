@@ -19,11 +19,11 @@ public class WebFluxConfig implements WebFluxConfigurer {
 
         // Documentation
         registry.addResourceHandler("/api/v1/docs/**")
-                .addResourceLocations("classpath:/static/docs/", "file:docs/")
+                .addResourceLocations("classpath:/static/docs/", "classpath:/static/api/v1/docs/", "file:docs/")
                 .setCacheControl(org.springframework.http.CacheControl.noCache());
 
         registry.addResourceHandler("/docs/**")
-                .addResourceLocations("classpath:/static/docs/", "file:docs/")
+                .addResourceLocations("classpath:/static/docs/", "classpath:/static/api/v1/docs/", "file:docs/")
                 .setCacheControl(org.springframework.http.CacheControl.noCache());
     }
 }
