@@ -1,0 +1,111 @@
+# Geofence API — Exemples curl (utilisateur `user`)
+
+creation
+{
+  "type": "polygon",
+  "title": "Zone Entrepôt - Test",
+  "description": "Zone polygonale de test",
+  "isTemporalEnabled": false,
+  "isConditionalEnabled": true,
+  "startTime": null,
+  "endTime": null,
+  "polygon": {
+    "type": "Polygon",
+    "coordinates": [
+      [[3.866, 11.516], [3.867, 11.516], [3.867, 11.517], [3.866, 11.517], [3.866, 11.516]]
+    ]
+  }
+}
+
+Base : {{API_URL}} (ex. http://localhost:8080)
+Header d'authentification : Authorization: Bearer {{TOKEN}}
+
+---
+1) Récupérer toutes mes géofences
+GET /api/geofence
+
+curl -s -X GET "{{API_URL}}/geofence" \
+  -H "Authorization: Bearer {{TOKEN}}" \
+  -H "Accept: application/json"
+
+---
+2) Récupérer mes zones circulaires
+GET /api/geofence/circles
+
+curl -s -X GET "{{API_URL}}/geofence/circles" \
+  -H "Authorization: Bearer {{TOKEN}}" \
+  -H "Accept: application/json"
+
+---
+3) Récupérer mes zones polygonales
+GET /api/geofence/polygons
+
+curl -s -X GET "{{API_URL}}/geofence/polygons" \
+  -H "Authorization: Bearer {{TOKEN}}" \
+  -H "Accept: application/json"
+
+---
+4) Récupérer une géofence (par type + id)
+GET /api/geofence/{type}/{zoneId}
+- {type} = "c" pour circle, "p" pour polygon
+
+# Exemple (récupérer un cercle)
+curl -s -X GET "{{API_URL}}/geofence/c/123e4567-e89b-12d3-a456-426614174000" \
+  -H "Authorization: Bearer {{TOKEN}}" \
+  -H "Accept: application/json"
+
+---
+5) Modifier une géofence
+PUT /api/geofence/{type}/{zoneId}
+- envoie uniquement les champs à modifier (partial update via DTO supporté)
+
+# Exemple (modifier un cercle)
+curl -s -X PUT "{{API_URL}}/geofence/c/123e4567-e89b-12d3-a456-426614174000" \
+  -H "Authorization: Bearer {{TOKEN}}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Zone Bureau - MAJ",
+    "description": "Nouvelle description",
+    "isConditionalEnabled": true,
+    "radius": 400.0
+  }'
+
+# Exemple (modifier un polygone)
+curl -s -X PUT "{{API_URL}}/geofence/p/456e7890-e89b-12d3-a456-426614174001" \
+  -H "Authorization: Bearer {{TOKEN}}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Zone Entrepôt - MAJ",
+    "polygon": {
+      "type": "Polygon",
+      "coordinates": [ [[3.866, 11.516],[3.867, 11.516],[3.867,11.517],[3.866,11.517],[3.866,11.516]]] 
+    },
+    "isTemporalEnabled": true
+  }'
+
+---
+6) Supprimer une géofence
+DELETE /api/geofence/{type}/{zoneId}
+
+curl -s -X DELETE "{{API_URL}}/geofence/c/123e4567-e89b-12d3-a456-426614174000" \
+  -H "Authorization: Bearer {{TOKEN}}"
+
+---
+7) Récupérer toutes mes alertes (paginated)
+GET /api/alerts?page=0&size=20
+
+curl -s -X GET "{{API_URL}}/alerts?page=0&size=20" \
+  -H "Authorization: Bearer {{TOKEN}}" \
+  -H "Accept: application/json"
+
+---
+Notes rapides:
+- Toujours envoyer les booléens comme le DTO attend: ex. "isConditionalEnabled" et "isTemporalEnabled" (camelCase avec le préfixe "is").
+- Coordonnées: [longitude, latitude]
+- Codes de réponse usuels: 200 (OK), 201 (Created), 204 (No Content pour DELETE), 400/401/403/404/500 selon cas.
+
+Tester rapidement (exécution non interactive):
+- Pour debug 401: vérifier le token via /auth/verify-user ou relancer /auth/login
+- Pour debug 400/500: coller le JSON envoyé et vérifier les champs obligatoires (center+radius pour circle, polygon.coordinates pour polygon)
+
+Fichier créé pour usage direct dans Postman / script shell.

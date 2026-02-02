@@ -31,7 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
-
+scripts/
+project-context.txt
 
 prompter.py
 prompt/
