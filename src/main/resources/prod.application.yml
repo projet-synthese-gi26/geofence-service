@@ -69,7 +69,7 @@ spring:
   # KAFKA — Connexion sécurisée SASL/SCRAM-SHA-256
   # ------------------------------------------------------------------
   kafka:
-    bootstrap-servers: ${KAFKA_HOST}:${KAFKA_PORT:29092}
+    bootstrap-servers: ${KAFKA_HOST:localhost}:${KAFKA_PORT:29092}
 
     # ── Authentification SASL/SCRAM-SHA-256 ────────────────────────
     properties:
@@ -91,8 +91,8 @@ spring:
       max-poll-records: 50
       properties:
         # Restreindre les packages désérialisables (ne jamais laisser "*" en prod)
-        spring.json.trusted.packages: "com.yowyob.geofence.dto.request, com.yowyob.geofence.model"
-        isolation.level: read_committed
+        spring.json.trusted.packages: "ink.yowyob.geofence.*"
+        
 
     # ── Producer ────────────────────────────────────────────────────
     producer:
