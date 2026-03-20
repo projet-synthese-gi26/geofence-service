@@ -1,0 +1,747 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+
+
+    <changeSet id="v1.0-enable-postgis" author="geofence-service" failOnError="false">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM pg_extension WHERE extname = 'postgis'
+            </sqlCheck>
+        </preConditions>
+        <sql>CREATE EXTENSION postgis;</sql>
+    </changeSet>
+
+    <changeSet id="v1.0-enable-postgis-topology" author="geofence-service" failOnError="false">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM pg_extension WHERE extname = 'postgis_topology'
+            </sqlCheck>
+        </preConditions>
+        <sql>CREATE EXTENSION postgis_topology;</sql>
+    </changeSet>
+
+
+    <!-- ================================================================ -->
+    <!-- 2. TABLE : role                                                   -->
+    <!--    Entité : Role.java                                             -->
+    <!-- ================================================================ -->
+
+    <changeSet id="v1.0-create-role" author="geofence-service">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="role"/></not>
+        </preConditions>
+        <createTable tableName="role">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uq_role_name"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+
+    <!-- ================================================================ -->
+    <!-- 3. TABLE : users                                                  -->
+    <!--    Entité : User.java (implements UserDetails)                   -->
+    <!-- ================================================================ -->
+
+    <changeSet id="v1.0-create-users" author="geofence-service">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="users"/></not>
+        </preConditions>
+        <createTable tableName="users">
+            <column name="uuid" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uq_users_username"/>
+            </column>
+            <column name="password" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="firstname" type="VARCHAR(255)"/>
+            <column name="lastname" type="VARCHAR(255)"/>
+            <column name="phone_number" type="VARCHAR(50)">
+                <constraints unique="true" uniqueConstraintName="uq_users_phone"/>
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uq_users_email"/>
+            </column>
+            <column name="dob" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role_id" type="INTEGER">
+                <constraints foreignKeyName="fk_users_role"
+                             referencedTableName="role"
+                             referencedColumnNames="id"/>
+            </column>
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="account_non_expired" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="account_non_locked" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="credentials_non_expired" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+
+    <!-- ================================================================ -->
+    <!-- 4. TABLE : circle_geofence_zone                                  -->
+    <!--    Entité : CircleGeofenceZone extends GeofenceZone              -->
+    <!--    Stratégie TABLE_PER_CLASS → tous les champs de GeofenceZone  -->
+    <!--    sont répétés dans chaque table fille                          -->
+    <!-- ================================================================ -->
+
+    <changeSet id="v1.0-create-circle-geofence-zone" author="geofence-service">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="circle_geofence_zone"/></not>
+        </preConditions>
+        <createTable tableName="circle_geofence_zone">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(255)"/>
+            <column name="description" type="TEXT"/>
+            <column name="user_uuid" type="UUID">
+                <constraints foreignKeyName="fk_circle_user"
+                             referencedTableName="users"
+                             referencedColumnNames="uuid"/>
+            </column>
+            <column name="is_temporal_enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_time" type="TIME"/>
+            <column name="end_time" type="TIME"/>
+            <column name="is_conditional_enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_speed" type="DOUBLE PRECISION"/>
+            <column name="max_dwell_time" type="INTEGER"/>
+            <column name="min_dwell_time" type="INTEGER"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="center" type="geometry(Point, 4326)"/>
+            <column name="radius" type="DOUBLE PRECISION"/>
+        </createTable>
+    </changeSet>
+
+
+    <!-- ================================================================ -->
+    <!-- 5. TABLE : polygon_geofence_zone                                 -->
+    <!--    Entité : PolygonGeofenceZone extends GeofenceZone             -->
+    <!-- ================================================================ -->
+
+    <changeSet id="v1.0-create-polygon-geofence-zone" author="geofence-service">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="polygon_geofence_zone"/></not>
+        </preConditions>
+        <createTable tableName="polygon_geofence_zone">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(255)"/>
+            <column name="description" type="TEXT"/>
+            <column name="user_uuid" type="UUID">
+                <constraints foreignKeyName="fk_polygon_user"
+                             referencedTableName="users"
+                             referencedColumnNames="uuid"/>
+            </column>
+            <column name="is_temporal_enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_time" type="TIME"/>
+            <column name="end_time" type="TIME"/>
+            <column name="is_conditional_enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_speed" type="DOUBLE PRECISION"/>
+            <column name="max_dwell_time" type="INTEGER"/>
+            <column name="min_dwell_time" type="INTEGER"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="polygon" type="geometry(Polygon, 4326)"/>
+        </createTable>
+    </changeSet>
+
+
+    <!-- ================================================================ -->
+    <!-- 6. TABLE : geofence_active_days                                  -->
+    <!--    @ElementCollection de GeofenceZone                            -->
+    <!-- ================================================================ -->
+
+    <changeSet id="v1.0-create-geofence-active-days" author="geofence-service">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="geofence_active_days"/></not>
+        </preConditions>
+        <createTable tableName="geofence_active_days">
+            <column name="geofence_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="day_of_week" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+
+    <!-- ================================================================ -->
+    <!-- 7. TABLE : vehicle                                                -->
+    <!--    Entité : Vehicle.java (@Table sans name → "vehicle")          -->
+    <!-- ================================================================ -->
+
+    <changeSet id="v1.0-create-vehicle" author="geofence-service">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="vehicle"/></not>
+        </preConditions>
+        <createTable tableName="vehicle">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="brand" type="VARCHAR(255)"/>
+            <column name="model" type="VARCHAR(255)"/>
+            <column name="license_plate" type="VARCHAR(50)"/>
+            <column name="description" type="TEXT"/>
+            <column name="image_url" type="TEXT"/>
+            <column name="user_uuid" type="UUID">
+                <constraints foreignKeyName="fk_vehicle_user"
+                             referencedTableName="users"
+                             referencedColumnNames="uuid"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+
+    <!-- ================================================================ -->
+    <!-- 8. TABLE : vehicle_geofence_zones                                -->
+    <!--    @ManyToMany join table Vehicle ↔ GeofenceZone                 -->
+    <!-- ================================================================ -->
+
+    <changeSet id="v1.0-create-vehicle-geofence-zones" author="geofence-service">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="vehicle_geofence_zones"/></not>
+        </preConditions>
+        <createTable tableName="vehicle_geofence_zones">
+            <column name="vehicle_id" type="UUID">
+                <constraints nullable="false" primaryKey="true"
+                             foreignKeyName="fk_vgz_vehicle"
+                             referencedTableName="vehicle"
+                             referencedColumnNames="id"/>
+            </column>
+            <!-- Pas de FK : polymorphisme géré applicativement -->
+            <column name="geofence_zone_id" type="UUID">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+
+    <!-- ================================================================ -->
+    <!-- 9. TABLE : locations                                              -->
+    <!--    Entité : Location.java                                         -->
+    <!-- ================================================================ -->
+
+    <changeSet id="v1.0-create-locations" author="geofence-service">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="locations"/></not>
+        </preConditions>
+        <createTable tableName="locations">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="position" type="geometry(Point, 4326)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vehicle_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_location_vehicle"
+                             referencedTableName="vehicle"
+                             referencedColumnNames="id"/>
+            </column>
+            <column name="timestamp" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="speed" type="DOUBLE PRECISION"/>
+            <column name="heading" type="DOUBLE PRECISION"/>
+            <column name="altitude" type="DOUBLE PRECISION"/>
+            <column name="accuracy" type="DOUBLE PRECISION"/>
+            <column name="source" type="VARCHAR(500)"/>
+        </createTable>
+    </changeSet>
+
+
+    <!-- ================================================================ -->
+    <!-- 10. TABLE : alert_type                                            -->
+    <!--     Entité : AlertType.java (@Table sans name → "alert_type")    -->
+    <!-- ================================================================ -->
+
+    <changeSet id="v1.0-create-alert-type" author="geofence-service">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="alert_type"/></not>
+        </preConditions>
+        <createTable tableName="alert_type">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uq_alert_type"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+
+    <!-- ================================================================ -->
+    <!-- 11. TABLE : alert                                                 -->
+    <!--     Entité : Alert.java (@Table sans name → "alert")             -->
+    <!--     geofence_zone_id sans FK (polymorphisme TABLE_PER_CLASS)     -->
+    <!-- ================================================================ -->
+
+    <changeSet id="v1.0-create-alert" author="geofence-service">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="alert"/></not>
+        </preConditions>
+        <createTable tableName="alert">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="type_id" type="INTEGER">
+                <constraints foreignKeyName="fk_alert_type"
+                             referencedTableName="alert_type"
+                             referencedColumnNames="id"/>
+            </column>
+            <column name="vehicle_id" type="UUID">
+                <constraints foreignKeyName="fk_alert_vehicle"
+                             referencedTableName="vehicle"
+                             referencedColumnNames="id"/>
+            </column>
+            <column name="geofence_zone_id" type="UUID"/>
+            <column name="location_id" type="UUID">
+                <constraints foreignKeyName="fk_alert_location"
+                             referencedTableName="locations"
+                             referencedColumnNames="id"/>
+            </column>
+            <column name="message" type="TEXT"/>
+            <column name="timestamp" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+            <column name="speed" type="DOUBLE PRECISION"/>
+            <column name="dwell_time_minutes" type="INTEGER"/>
+            <column name="is_read" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="severity" type="VARCHAR(20)" defaultValue="INFO">
+                <constraints nullable="false"/>
+            </column>
+            <column name="additional_data" type="TEXT"/>
+        </createTable>
+    </changeSet>
+
+
+    <!-- ================================================================ -->
+    <!-- 12. TABLE : geofence_forks                                        -->
+    <!--     Entité : GeofenceFork.java                                    -->
+    <!--     FKs sur geofences sans contrainte (TABLE_PER_CLASS)          -->
+    <!-- ================================================================ -->
+
+    <changeSet id="v1.0-create-geofence-forks" author="geofence-service">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="geofence_forks"/></not>
+        </preConditions>
+        <createTable tableName="geofence_forks">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="original_geofence_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="forked_geofence_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="forked_by_user_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_fork_user"
+                             referencedTableName="users"
+                             referencedColumnNames="uuid"/>
+            </column>
+            <column name="forked_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="fork_reason" type="VARCHAR(500)"/>
+        </createTable>
+    </changeSet>
+
+
+    <!-- ================================================================ -->
+    <!-- 13. TABLE : geofence_invite_links                                 -->
+    <!--     Entité : GeofenceInviteLink.java                             -->
+    <!-- ================================================================ -->
+
+    <changeSet id="v1.0-create-geofence-invite-links" author="geofence-service">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="geofence_invite_links"/></not>
+        </preConditions>
+        <createTable tableName="geofence_invite_links">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="invite_code" type="VARCHAR(12)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uq_invite_code"/>
+            </column>
+            <column name="geofence_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="geofence_type" type="VARCHAR(1)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_invite_user"
+                             referencedTableName="users"
+                             referencedColumnNames="uuid"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expires_at" type="TIMESTAMP"/>
+            <column name="can_edit" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_uses" type="INTEGER" defaultValueNumeric="-1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_uses" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+
+    <!-- ================================================================ -->
+    <!-- 14. TABLE : geofence_share                                        -->
+    <!--     Entité : GeofenceShare.java (@Table sans name → "geofence_share") -->
+    <!-- ================================================================ -->
+
+    <changeSet id="v1.0-create-geofence-share" author="geofence-service">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="geofence_share"/></not>
+        </preConditions>
+        <createTable tableName="geofence_share">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="geofence_zone_id" type="UUID"/>
+            <column name="shared_by_user_id" type="UUID">
+                <constraints foreignKeyName="fk_share_by_user"
+                             referencedTableName="users"
+                             referencedColumnNames="uuid"/>
+            </column>
+            <column name="shared_with_user_id" type="UUID">
+                <constraints foreignKeyName="fk_share_with_user"
+                             referencedTableName="users"
+                             referencedColumnNames="uuid"/>
+            </column>
+            <column name="shared_at" type="TIMESTAMP"/>
+            <column name="expires_at" type="TIMESTAMP"/>
+            <column name="can_edit" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="status" type="VARCHAR(50)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+            <column name="responded_at" type="TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+
+
+    <!-- ================================================================ -->
+    <!-- 15. TABLE : validation                                            -->
+    <!--     Entité : Validation.java                                      -->
+    <!-- ================================================================ -->
+
+    <changeSet id="v1.0-create-validation" author="geofence-service">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="validation"/></not>
+        </preConditions>
+        <createTable tableName="validation">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="creation" type="TIMESTAMP"/>
+            <column name="expiration" type="TIMESTAMP"/>
+            <column name="activation" type="TIMESTAMP"/>
+            <column name="verification_token" type="VARCHAR(255)"/>
+            <column name="user_uuid" type="UUID">
+                <constraints foreignKeyName="fk_validation_user"
+                             referencedTableName="users"
+                             referencedColumnNames="uuid"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+
+    <!-- ================================================================ -->
+    <!-- 16. TABLE : organizations                                         -->
+    <!--     Entité : Organization.java                                    -->
+    <!-- ================================================================ -->
+
+    <changeSet id="v1.0-create-organizations" author="geofence-service">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="organizations"/></not>
+        </preConditions>
+        <createTable tableName="organizations">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="domain" type="VARCHAR(255)">
+                <constraints unique="true" uniqueConstraintName="uq_org_domain"/>
+            </column>
+            <column name="api_key" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uq_org_api_key"/>
+            </column>
+            <column name="contact_email" type="VARCHAR(255)"/>
+            <column name="webhook_url" type="VARCHAR(255)"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="is_internal" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="subscription_plan" type="VARCHAR(50)" defaultValue="FREE"/>
+            <column name="max_users" type="INTEGER" defaultValueNumeric="10"/>
+            <column name="max_vehicles" type="INTEGER" defaultValueNumeric="50"/>
+            <column name="max_geofences" type="INTEGER" defaultValueNumeric="20"/>
+            <column name="rate_limit_per_hour" type="INTEGER" defaultValueNumeric="1000"/>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_api_call" type="TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+
+
+    <!-- ================================================================ -->
+    <!-- 17. TABLE : organization_users                                    -->
+    <!--     Entité : OrganizationUser.java                               -->
+    <!-- ================================================================ -->
+
+    <changeSet id="v1.0-create-organization-users" author="geofence-service">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="organization_users"/></not>
+        </preConditions>
+        <createTable tableName="organization_users">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="organization_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_orguser_org"
+                             referencedTableName="organizations"
+                             referencedColumnNames="id"/>
+            </column>
+            <column name="external_user_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(255)"/>
+            <column name="name" type="VARCHAR(255)"/>
+            <column name="role" type="VARCHAR(50)" defaultValue="USER"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_login_at" type="TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+
+
+    <!-- ================================================================ -->
+    <!-- 18. TABLE : routes                                                -->
+    <!--     Entité : Route.java                                           -->
+    <!-- ================================================================ -->
+
+    <changeSet id="v1.0-create-routes" author="geofence-service">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="routes"/></not>
+        </preConditions>
+        <createTable tableName="routes">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_route_user"
+                             referencedTableName="users"
+                             referencedColumnNames="uuid"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(500)"/>
+            <column name="start_point" type="geometry(Point, 4326)"/>
+            <column name="start_address" type="VARCHAR(255)"/>
+            <column name="end_point" type="geometry(Point, 4326)"/>
+            <column name="end_address" type="VARCHAR(255)"/>
+            <column name="estimated_distance" type="DOUBLE PRECISION"/>
+            <column name="estimated_duration" type="INTEGER"/>
+            <column name="deviation_tolerance" type="DOUBLE PRECISION" defaultValueNumeric="100.0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_temporal_enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_time" type="TIME"/>
+            <column name="end_time" type="TIME"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+
+
+    <!-- ================================================================ -->
+    <!-- 19. TABLE : route_active_days                                     -->
+    <!--     @ElementCollection de Route.java                             -->
+    <!-- ================================================================ -->
+
+    <changeSet id="v1.0-create-route-active-days" author="geofence-service">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="route_active_days"/></not>
+        </preConditions>
+        <createTable tableName="route_active_days">
+            <column name="route_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_rad_route"
+                             referencedTableName="routes"
+                             referencedColumnNames="id"/>
+            </column>
+            <column name="day_of_week" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+
+    <!-- ================================================================ -->
+    <!-- 20. TABLE : route_segments                                        -->
+    <!--     Entité : RouteSegment.java                                    -->
+    <!-- ================================================================ -->
+
+    <changeSet id="v1.0-create-route-segments" author="geofence-service">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="route_segments"/></not>
+        </preConditions>
+        <createTable tableName="route_segments">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="route_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_segment_route"
+                             referencedTableName="routes"
+                             referencedColumnNames="id"/>
+            </column>
+            <column name="name" type="VARCHAR(100)"/>
+            <column name="description" type="VARCHAR(500)"/>
+            <column name="path_line" type="geometry(LineString, 4326)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="segment_order" type="INTEGER"/>
+            <column name="segment_length" type="DOUBLE PRECISION">
+                <constraints nullable="false"/>
+            </column>
+            <column name="segment_type" type="VARCHAR(50)" defaultValue="MAIN_ROUTE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="priority" type="INTEGER" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="speed_limit" type="DOUBLE PRECISION"/>
+            <column name="estimated_time" type="INTEGER"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+
+
+    <!-- ================================================================ -->
+    <!-- 21. TABLE : vehicle_assigned_routes                               -->
+    <!--     @ManyToMany join table Vehicle ↔ Route                       -->
+    <!-- ================================================================ -->
+
+    <changeSet id="v1.0-create-vehicle-assigned-routes" author="geofence-service">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="vehicle_assigned_routes"/></not>
+        </preConditions>
+        <createTable tableName="vehicle_assigned_routes">
+            <column name="vehicle_id" type="UUID">
+                <constraints nullable="false" primaryKey="true"
+                             foreignKeyName="fk_var_vehicle"
+                             referencedTableName="vehicle"
+                             referencedColumnNames="id"/>
+            </column>
+            <column name="route_id" type="UUID">
+                <constraints nullable="false" primaryKey="true"
+                             foreignKeyName="fk_var_route"
+                             referencedTableName="routes"
+                             referencedColumnNames="id"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+
+    <!-- ================================================================ -->
+    <!-- 22. TABLE : vehicle_api_keys                                      -->
+    <!--     Entité : VehicleApiKey.java                                   -->
+    <!-- ================================================================ -->
+
+    <changeSet id="v1.0-create-vehicle-api-keys" author="geofence-service">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="vehicle_api_keys"/></not>
+        </preConditions>
+        <createTable tableName="vehicle_api_keys">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="api_key" type="VARCHAR(64)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uq_vehicle_api_key"/>
+            </column>
+            <column name="vehicle_id" type="UUID">
+                <constraints nullable="false" unique="true"
+                             uniqueConstraintName="uq_vehicle_api_key_vehicle"
+                             foreignKeyName="fk_apikey_vehicle"
+                             referencedTableName="vehicle"
+                             referencedColumnNames="id"/>
+            </column>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_used_at" type="TIMESTAMP"/>
+            <column name="expires_at" type="TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>
