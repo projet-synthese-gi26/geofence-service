@@ -139,3 +139,7 @@ management:
     export:
       prometheus:
         enabled: true
+
+jwt:
+  encryption:
+    key: ${JWT_ENCRYPTION_KEY:dGVzdC1zZWNyZXQta2V5LWZvci1kZXYtb25seS0xMjM=}
