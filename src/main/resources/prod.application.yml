@@ -10,8 +10,8 @@ spring:
 
   liquibase:
     url: jdbc:postgresql://${DB_HOST}:${DB_PORT:5432}/${DB_NAME:yowyob}
-    user: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    user: ${DB_LIQUIBASE_USERNAME}
+    password: ${DB_LIQUIBASE_PASSWORD}
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.xml
     default-schema: public
@@ -19,14 +19,14 @@ spring:
 
   datasource:
     url: jdbc:postgresql://${DB_HOST}:${DB_PORT:5432}/${DB_NAME:yowyob}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    username: ${DB_LIQUIBASE_USERNAME}
+    password: ${DB_LIQUIBASE_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   r2dbc:
     url: r2dbc:postgresql://${DB_HOST}:${DB_PORT:5432}/${DB_NAME:yowyob}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    username: ${DB_LIQUIBASE_PASSWORD}
+    password: ${DB_LIQUIBASE_PASSWORD}
     pool:
       enabled: true
       initial-size: 5
