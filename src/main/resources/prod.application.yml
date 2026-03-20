@@ -120,7 +120,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
-    database-platform: org.hibernate.spatial.dialect.postgis.PostgisDialect
+    
 
 # ------------------------------------------------------------------
 # MONITORING & HEALTH CHECK (ACTUATOR)
