@@ -1,3 +1,0 @@
-databaseChangeLog:
-  - include:
-      file: classpath:db/changelog/changes/V1.0-create-initial-schema.xml

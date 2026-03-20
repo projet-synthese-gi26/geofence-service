@@ -13,7 +13,7 @@ spring:
     user: ${DB_LIQUIBASE_USERNAME:${DB_USERNAME}}
     password: ${DB_LIQUIBASE_PASSWORD:${DB_PASSWORD}}
     enabled: true
-    change-log: classpath:db/changelog/db.changelog-master.yaml
+    change-log: classpath:db/changelog/db.changelog-master.xml
     default-schema: public
     liquibase-schema: public
 
